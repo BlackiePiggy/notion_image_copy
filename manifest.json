@@ -1,0 +1,23 @@
+{
+  "name": "Notion Clipboard Image Fixer",
+  "description": "Replace temporary Notion image links with real ones when copying.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": [
+    "clipboardRead",
+    "clipboardWrite",
+    "activeTab",
+    "scripting"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.notion.so/*"
+      ],
+      "js": [
+        "contentScript.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
