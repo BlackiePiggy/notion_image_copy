@@ -49,24 +49,19 @@ This extension intercepts the `copy` event on Notion pages. It finds all such im
 #### Notion -> Lark (Feishu)
 
 -   **Before using the extension:** Images are missing upon pasting.
-    <video src="assets/notion2feishu_before.mp4" controls width="640" height="360">
-      Your browser does not support the video tag.
-    </video>
+    ![Notion2Lark_before_demo](./assets/notion2feishu_before.gif)
 
 -   **After using the extension:** Images and text are pasted correctly.
-    <video src="assets/notion2feishu_after.mp4" controls width="640" height="360">
-      Your browser does not support the video tag.
-    </video>
+    ![Notion2Lark_after_demo](./assets/notion2feishu_after.gif)
 
 #### Notion -> Microsoft Word
 
 -   **Before using the extension:** Image placeholders are shown, but the images fail to load.
-    ![Notion2word_demo](assets/notion2word_before.mp4)
+
+    ![Notion2word_before_demo](./assets/notion2word_before.gif)
 
 -   **After using the extension:** Images are embedded perfectly in the document.
-    <video src="assets/notion2word_after.mp4" controls width="640" height="360">
-      Your browser does not support the video tag.
-    </video>
+    ![Notion2word_after_demo](./assets/notion2word_after.gif)
 
 ---
 
@@ -111,23 +106,15 @@ This extension intercepts the `copy` event on Notion pages. It finds all such im
 #### Notion -> 飞书 (Lark)
 
 -   **使用插件前**：粘贴后图片丢失。
-    <video src="assets/notion2feishu_before.mp4" controls width="640" height="360">
-      您的浏览器不支持视频播放。
-    </video>
+    ![Notion2Lark_before_demo](./assets/notion2feishu_before.gif)
 
 -   **使用插件后**：图片和文本被正确粘贴。
-    <video src="assets/notion2feishu_after.mp4" controls width="640" height="360">
-      您的浏览器不支持视频播放。
-    </video>
+    ![Notion2Lark_after_demo](./assets/notion2feishu_after.gif)
 
 #### Notion -> Microsoft Word
 
 -   **使用插件前**：显示图片占位符，但图片加载失败。
-    <video src="assets/notion2word_before.mp4" controls width="640" height="360">
-      您的浏览器不支持视频播放。
-    </video>
+    ![Notion2word_before_demo](./assets/notion2word_before.gif)
 
 -   **使用插件后**：图片被完美嵌入文档中。
-    <video src="assets/notion2word_after.mp4" controls width="640" height="360">
-      您的浏览器不支持视频播放。
-    </video>
+    ![Notion2word_after_demo](./assets/notion2word_after.gif)
