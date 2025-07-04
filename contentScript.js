@@ -112,6 +112,27 @@
     console.log
     showNotification('正在处理图片...', 'info', 2000);
 
+    //先把clipboard内容读取出来
+    const clipboardItems = await navigator.clipboard.read(); 
+    let htmlContent = null;
+      for (const item of clipboardItems) {
+        if (item.types.includes('text/html')) {
+          const htmlBlob = await item.getType('text/html');
+          htmlContent = await htmlBlob.text();
+          break;
+        }
+      }
+      console.log('原始剪贴板 HTML 内容:', htmlContent);
+
+    if (!htmlContent) {
+      showNotification('剪贴板中未找到 HTML 内容。', 'info', 3000);
+      return;
+    }
+
+    // 使用 DOMParser 解析 HTML 内容
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+
     try {
       // 1. 从页面获取所有选定图片的 src，并将其转换为 Data URL
       const dataUrlPromises = Array.from(document.querySelectorAll(REAL_IMG_SELECTOR))
@@ -137,27 +158,9 @@
       if (processedUrls.length === 0) {
         showNotification('未能成功处理任何图片。', 'info', 3000);
         return;
-      }
-
-      // 2. 读取剪贴板的 HTML 内容
-      const clipboardItems = await navigator.clipboard.read();
-      let htmlContent = null;
-      for (const item of clipboardItems) {
-        if (item.types.includes('text/html')) {
-          const htmlBlob = await item.getType('text/html');
-          htmlContent = await htmlBlob.text();
-          break;
-        }
-      }
-
-      if (!htmlContent) {
-        showNotification('剪贴板中未找到 HTML 内容。', 'info', 3000);
-        return;
-      }
+      }      
       
-      // 3. 解析 HTML 并替换图片 src
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlContent, 'text/html');
+      // 2. 解析 HTML 并替换图片 src
       const imagesInClipboard = doc.querySelectorAll(FAKE_IMG_SELECTOR);
       
       let replacedCount = 0;
@@ -174,9 +177,11 @@
         showNotification('未能在剪贴板中匹配到可替换的图片。', 'error', 4000);
         return;
       }
+      
 
-      // 4. 将修改后的 HTML 写回剪贴板
+      // 3. 将修改后的 HTML 写回剪贴板
       const updatedHtml = doc.documentElement.outerHTML;
+      console.log('更新后的剪贴板 HTML 内容:', updatedHtml);
       await navigator.clipboard.write([
         new ClipboardItem({
           'text/html': new Blob([updatedHtml], { type: 'text/html' }),
