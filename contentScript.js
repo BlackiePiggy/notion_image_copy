@@ -1,7 +1,40 @@
-// Notion Clipboard Image Fixer
+// ==UserScript==
+// @name         Notion Clipboard Image Fixer (Optimized for Feishu/Lark)
+// @namespace    http://tampermonkey.net/
+// @version      2.0
+// @description  Copies images from Notion and converts them to Data URLs in the clipboard to ensure stable pasting into applications like Feishu/Lark.
+// @author       Your Name
+// @match        https://www.notion.so/*
+// @grant        none
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=notion.so
+// ==/UserScript==
+
 (function () {
+  'use strict';
+
+  // --- 选择器常量 ---
+  // 选择 Notion 页面上实际显示的图片元素
   const REAL_IMG_SELECTOR = 'div[role="figure"] img';
+  // 选择剪贴板 HTML 中可能出现的各种格式的图片标签
   const FAKE_IMG_SELECTOR = 'img[src$=".png"], img[src$=".jpeg"], img[src$=".jpg"], img[src$=".webp"], img[src$=".gif"], img[src$=".svg"]';
+
+
+  // --- 核心辅助函数 ---
+
+  /**
+   * 将 Blob 对象转换为 Base64 编码的 Data URL。
+   * 这是解决飞书粘贴不问题的关键，它将图片数据直接嵌入HTML。
+   * @param {Blob} blob - 图片的 Blob 对象。
+   * @returns {Promise<string>} - 返回 Data URL 字符串。
+   */
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
 
   /**
    * 显示一个自定义的、自动消失的通知提示。
@@ -62,35 +95,54 @@
     setTimeout(() => {
       notificationDiv.style.opacity = '0'; // 淡出
       setTimeout(() => {
-        notificationDiv.remove(); // 移除元素
+        if (notificationDiv.parentElement) {
+            notificationDiv.remove(); // 移除元素
+        }
       }, 300); // 等待淡出动画完成再移除
     }, duration);
   }
 
+
+  // --- 主要处理函数 ---
+
+  /**
+   * 核心函数：修复剪贴板中的图片链接。
+   */
   async function fixClipboard() {
-    showNotification('正在处理图片链接...', 'info', 2000); // 不那么紧急，短时间提示
+    console.log('[Clipboard Image Fixer] 开始处理剪贴板中的图片链接...');
+    showNotification('正在处理图片...', 'info', 2000);
 
     try {
-      const realUrlPromises = Array.from(document.querySelectorAll(REAL_IMG_SELECTOR))
-        .map(async img => {
-          const raw = img.getAttribute('src') || '';
-          console.log('原始图片 URL:', raw);
+      // 1. 从页面获取所有选定图片的 src，并将其转换为 Data URL
+      const dataUrlPromises = Array.from(document.querySelectorAll(REAL_IMG_SELECTOR))
+        .map(async (img) => {
+          const rawSrc = img.getAttribute('src');
+          if (!rawSrc) return null; // 忽略没有 src 的图片
+
+          console.log('原始图片 URL:', rawSrc);
           try {
-            const response = await fetch(raw);
-            console.log('处理后的图片 URL:', response.url);
-            return response.url;
+            const response = await fetch(rawSrc);
+            const imageBlob = await response.blob();
+            const dataUrl = await blobToDataURL(imageBlob);
+            console.log('成功转换为 Data URL');
+            return dataUrl;
           } catch (error) {
-            console.error('获取图片 URL 失败:', raw, error);
-            return raw;
+            console.error('图片获取或转换失败:', rawSrc, error);
+            return null; // 失败时返回 null，后续会过滤掉
           }
         });
 
-      const realUrls = await Promise.all(realUrlPromises);
+      const processedUrls = (await Promise.all(dataUrlPromises)).filter(url => url !== null);
 
-      const clipitem = await navigator.clipboard.read();
+      if (processedUrls.length === 0) {
+        showNotification('未能成功处理任何图片。', 'info', 3000);
+        return;
+      }
+
+      // 2. 读取剪贴板的 HTML 内容
+      const clipboardItems = await navigator.clipboard.read();
       let htmlContent = null;
-
-      for (const item of clipitem) {
+      for (const item of clipboardItems) {
         if (item.types.includes('text/html')) {
           const htmlBlob = await item.getType('text/html');
           htmlContent = await htmlBlob.text();
@@ -98,44 +150,63 @@
         }
       }
 
-      console.log('剪贴板中的 HTML 内容:', htmlContent);
-
       if (!htmlContent) {
-        showNotification('剪贴板中没有找到 HTML 内容，无需处理。', 'info', 3000);
+        showNotification('剪贴板中未找到 HTML 内容。', 'info', 3000);
         return;
       }
-
+      
+      // 3. 解析 HTML 并替换图片 src
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlContent, 'text/html');
-
-      const images = doc.querySelectorAll(FAKE_IMG_SELECTOR);
-      images.forEach((img, idx) => {
-        if (idx < realUrls.length) {
+      const imagesInClipboard = doc.querySelectorAll(FAKE_IMG_SELECTOR);
+      
+      let replacedCount = 0;
+      imagesInClipboard.forEach((img, idx) => {
+        if (idx < processedUrls.length) {
           const oldSrc = img.getAttribute('src');
-          img.setAttribute('src', realUrls[idx]);
-          console.log(`替换图片 src: ${oldSrc} -> ${realUrls[idx]}`);
-        } else {
-          console.warn(`没有足够的 realUrls 替换第 ${idx} 张图片`);
+          img.setAttribute('src', processedUrls[idx]);
+          console.log(`替换图片 src: ${oldSrc} -> [Data URL]`);
+          replacedCount++;
         }
       });
 
+      if (replacedCount === 0) {
+        showNotification('未能在剪贴板中匹配到可替换的图片。', 'error', 4000);
+        return;
+      }
 
+      // 4. 将修改后的 HTML 写回剪贴板
       const updatedHtml = doc.documentElement.outerHTML;
-      console.log('更新后的 HTML 内容:', updatedHtml);
       await navigator.clipboard.write([
         new ClipboardItem({
-          'text/html': new Blob([updatedHtml], { type: 'text/html' })
-        })
+          'text/html': new Blob([updatedHtml], { type: 'text/html' }),
+        }),
       ]);
 
-      showNotification('图片链接已成功修复并更新到剪贴板！', 'success', 3000);
-      console.info('[Clipboard Image Fixer] Clipboard updated with real image URLs.');
+      showNotification(`成功将 ${replacedCount} 个图片嵌入剪贴板！`, 'success', 3000);
+      console.info('[Clipboard Image Fixer] Clipboard updated with Base64 Data URLs.');
 
     } catch (e) {
       console.error('[Clipboard Image Fixer] Error:', e);
-      showNotification('修复图片链接时发生错误，请检查控制台。', 'error', 5000);
+      if (e.name === 'NotAllowedError') {
+        showNotification('错误：需要剪贴板读写权限！', 'error', 5000);
+      } else {
+        showNotification('处理时发生未知错误，请检查控制台。', 'error', 5000);
+      }
     }
   }
 
-  document.addEventListener('copy', () => setTimeout(fixClipboard, 100));
+
+  // --- 事件监听器 ---
+
+  // 监听 'copy' 事件，并使用一个小的延迟来确保浏览器原生复制操作已完成。
+  document.addEventListener('copy', () => {
+    // 检查是否有选中的内容，避免在无意义的复制操作时触发
+    if (window.getSelection().toString().trim() !== '') {
+        setTimeout(fixClipboard, 100); // 100ms 延迟，比 0 更稳健
+    }
+  });
+
+  console.log('Notion Clipboard Image Fixer (Optimized) is active.');
+
 })();
