@@ -61,9 +61,7 @@ This extension intercepts the `copy` event on Notion pages. It finds all such im
 #### Notion -> Microsoft Word
 
 -   **Before using the extension:** Image placeholders are shown, but the images fail to load.
-    <video src="assets/notion2word_before.mp4" controls width="640" height="360">
-      Your browser does not support the video tag.
-    </video>
+    ![Notion2word_demo](assets/notion2word_before.mp4)
 
 -   **After using the extension:** Images are embedded perfectly in the document.
     <video src="assets/notion2word_after.mp4" controls width="640" height="360">
