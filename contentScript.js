@@ -109,7 +109,7 @@
    * 核心函数：修复剪贴板中的图片链接。
    */
   async function fixClipboard() {
-    console.log('[Clipboard Image Fixer] 开始处理剪贴板中的图片链接...');
+    console.log
     showNotification('正在处理图片...', 'info', 2000);
 
     try {
@@ -202,9 +202,7 @@
   // 监听 'copy' 事件，并使用一个小的延迟来确保浏览器原生复制操作已完成。
   document.addEventListener('copy', () => {
     // 检查是否有选中的内容，避免在无意义的复制操作时触发
-    if (window.getSelection().toString().trim() !== '') {
         setTimeout(fixClipboard, 100); // 100ms 延迟，比 0 更稳健
-    }
   });
 
   console.log('Notion Clipboard Image Fixer (Optimized) is active.');
