@@ -1,4 +1,18 @@
-# Notion Clipboard Image Copy Fixer
+<div align="center">
+
+  
+
+  # Notion Clipboard Image Copy Fixer
+
+  <img src="./icons/icon128.png" width="128" height="128" alt="Extension Icon">
+
+  <p>一个浏览器扩展，用于解决从 Notion 页面复制内容时无法包含图片的问题。</p>
+  <p>A browser extension for Chrome/Edge to fix the issue where images are not included when copying content from Notion pages.</p>
+  <p><i>Developed by Jason</i></p>
+
+</div>
+
+---
 
 <div align="center">
 
@@ -10,7 +24,7 @@
 
 <a name="english"></a>
 
-## English
+## English README
 
 A browser extension for Chrome/Edge to fix the issue where images are not included when copying content from Notion pages.
 
@@ -67,7 +81,7 @@ This extension intercepts the `copy` event on Notion pages. It finds all such im
 
 <a name="中文"></a>
 
-## 中文
+## 中文说明
 
 一个 Chrome/Edge 浏览器扩展，用于解决从 Notion 页面复制内容时无法包含图片的问题。
 
